@@ -11,31 +11,64 @@
 tmp="$1"
 client="${2:-}"
 
-opt() {
-  local v
-  v="$(tmux show-option -gqv "$1")"
-  printf '%s' "${v:-$2}"
-}
-
-GUTTER=$'\e['"$(opt @yanker-gutter-style 90)"'m'
-SELECTED=$'\e['"$(opt @yanker-selected-style '30;43')"'m'
-copy_cmd="$(opt @yanker-copy-command '')"
-RESET=$'\e[0m'
-
 cleanup() {
   printf '\e[?7h\e[?25h'
   rm -rf "$tmp"
 }
 trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
 
-colored=(); plain=()
-while IFS= read -r l || [ -n "$l" ]; do colored+=("$l"); done < "$tmp/colored"
-while IFS= read -r l || [ -n "$l" ]; do plain+=("$l"); done < "$tmp/plain"
+# Written by yanker.sh: height width gutter_style selected_style copy_cmd
+. "$tmp/opts"
+
+GUTTER=$'\e['"$gutter_style"'m'
+SELECTED=$'\e['"$selected_style"'m'
+RESET=$'\e[0m'
+
+shopt -s extglob
+
+# Visible width of $1, ignoring SGR and OSC (e.g. hyperlink) escapes.
+ESC=$'\e'
+visible_len() {
+  local t="${1//"$ESC"\[*([0-9;:])m/}"
+  t="${t//"$ESC"\]*([!"$ESC"])"$ESC"\\/}"
+  REPLY=${#t}
+}
+
+# Expand tabs to spaces on 8-column stops of the original pane, so the
+# gutter does not shift them. Result in REPLY.
+expand_tabs() {
+  local s="$1" out="" col=0 pre pad sp
+  while [[ "$s" == *$'\t'* ]]; do
+    pre="${s%%$'\t'*}"
+    s="${s#*$'\t'}"
+    visible_len "$pre"
+    col=$(( col + REPLY ))
+    pad=$(( 8 - col % 8 ))
+    printf -v sp '%*s' "$pad" ''
+    out+="$pre$sp"
+    col=$(( col + pad ))
+  done
+  REPLY="$out$s"
+}
+
+# snapshot = <height> plain lines, then <height> colored lines
+colored=(); plain=(); shown=()
+i=0
+while IFS= read -r l || [ -n "$l" ]; do
+  expand_tabs "$l"
+  if [ "$i" -lt "$height" ]; then
+    plain+=("$l"); shown+=("$REPLY")
+  else
+    colored+=("$REPLY")
+  fi
+  i=$(( i + 1 ))
+done < "$tmp/snapshot"
 n=${#colored[@]}
 [ "$n" -eq 0 ] && exit 0
 gw=${#n}
-
-read -r rows cols < <(stty size 2>/dev/null || echo "$n 80")
+rows=$n
+cols=$width
 
 a=""      # first line number (as typed)
 b=""      # second line number
@@ -56,7 +89,7 @@ render() {
   for (( i = 0; i < n; i++ )); do
     num=$(( i + 1 ))
     if [ "$num" -ge "$lo" ] && [ "$num" -le "$hi" ]; then
-      printf -v line '%s%*d %s\e[K%s' "$SELECTED" "$gw" "$num" "${plain[i]}" "$RESET"
+      printf -v line '%s%*d %s\e[K%s' "$SELECTED" "$gw" "$num" "${shown[i]}" "$RESET"
     else
       printf -v line '%s%*d%s %s%s\e[K' "$GUTTER" "$gw" "$num" "$RESET" "${colored[i]}" "$RESET"
     fi
