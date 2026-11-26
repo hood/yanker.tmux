@@ -2,16 +2,9 @@
 
 Yank lines from the visible tmux pane by line number. No copy-mode dance.
 
-Hit the key, line numbers show up over the pane, type `12 y` and line 12 is in your clipboard.
+Hit the key, line numbers show up over the pane, type `5 y` and line 5 is in your clipboard. `4,6 y` grabs a range.
 
-```
- 1 $ make test
- 2 go test ./...
- 3 --- FAIL: TestParse (0.00s)
- 4     parse_test.go:42: expected 3, got 4        <- 3,4 y
- 5 FAIL
- 6 $                                                    3,4
-```
+![demo](assets/demo.gif)
 
 ## Keys
 
@@ -59,6 +52,7 @@ set -g @yanker-key Y                    # prefix binding, '' to disable
 set -g @yanker-root-key M-y             # optional binding without prefix
 set -g @yanker-gutter-style '90'        # SGR params for line numbers
 set -g @yanker-selected-style '30;43'   # SGR params for selected lines
+set -g @yanker-popup-style 'bg=terminal' # popup colors, default blends into the pane
 set -g @yanker-copy-command 'pbcopy'    # default: pbcopy / wl-copy / xclip / xsel
 ```
 
@@ -72,6 +66,14 @@ set -g @yanker-copy-command 'pbcopy'    # default: pbcopy / wl-copy / xclip / xs
 
 - Numbers are screen rows, so a long wrapped line counts as several rows.
 - Arrow keys cancel the picker.
+
+## Demo
+
+The GIF is scripted with [VHS](https://github.com/charmbracelet/vhs) in a sandboxed tmux, re-record it with:
+
+```sh
+vhs demo/demo.tape
+```
 
 ## License
 

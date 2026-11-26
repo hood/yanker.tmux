@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+sleep 0.4
+printf 'ok  \texample.com/api/auth\t0.412s\n'
+printf 'ok  \texample.com/api/billing\t0.287s\n'
+printf '\e[31m--- FAIL: TestParseInvoice (0.00s)\e[0m\n'
+printf '    invoice_test.go:42: total mismatch: want 1299, got 1300\n'
+printf '\e[31mFAIL\texample.com/api/invoice\t0.153s\e[0m\n'
+printf 'ok  \texample.com/api/users\t0.334s\n'
+printf '\e[31mFAIL\e[0m\n'
