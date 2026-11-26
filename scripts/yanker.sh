@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 # Snapshot the visible part of a pane and open the picker in a popup on top of it.
-# usage: yanker.sh <pane_id> <client_name>
+# usage: yanker.sh [pane_id] [client_name]
+#   Without arguments it targets the active pane and the client that ran it,
+#   so a custom binding can be just: run-shell -b "#{@yanker-cmd}"
 #
 # Every tmux call costs a client round trip, so this does all of its work in
 # three: one to read geometry and options, one to capture, one to open the popup.
 set -eu
 
 dir="$(cd "$(dirname "$0")" && pwd)"
-pane="${1:?pane id}"
+pane="${1:-}"
 client="${2:-}"
+if [ -z "$pane" ]; then
+  IFS=$'\x1f' read -r pane client < <(tmux display-message -p $'#{pane_id}\x1f#{client_name}')
+fi
 
 IFS=$'\x1f' read -r height width in_mode scroll gutter selected popup_style copy_cmd < <(
   tmux display-message -p -t "$pane" \

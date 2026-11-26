@@ -56,6 +56,16 @@ set -g @yanker-popup-style 'bg=terminal' # popup colors, default blends into the
 set -g @yanker-copy-command 'pbcopy'    # default: pbcopy / wl-copy / xclip / xsel
 ```
 
+### Custom bindings
+
+Bind it to anything, in any key table, via `@yanker-cmd`:
+
+```tmux
+set -g @yanker-key ''                                  # drop the default
+bind -n C-y run-shell -b "#{@yanker-cmd}"
+bind -T copy-mode-vi C-y run-shell -b "#{@yanker-cmd}"
+```
+
 ## How it works
 
 1. Snapshots the visible part of the pane with `capture-pane` (colors kept for display, plain text for yanking).
