@@ -67,14 +67,6 @@ set -g @yanker-copy-command 'pbcopy'    # default: pbcopy / wl-copy / xclip / xs
 - Numbers are screen rows, so a long wrapped line counts as several rows.
 - Arrow keys cancel the picker.
 
-## Demo
-
-The GIF is scripted with [VHS](https://github.com/charmbracelet/vhs) in a sandboxed tmux, re-record it with:
-
-```sh
-vhs demo/demo.tape
-```
-
 ## License
 
 MIT
